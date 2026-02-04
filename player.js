@@ -27,7 +27,10 @@ const player = {
     pistolAmmo: 0,
     pistolMaxAmmo: PISTOL_MAX_AMMO,
     pistolCooldown: 0,
-    pistolReload: 0
+    pistolReload: 0,
+    // Downward shot ability
+    hasDownShot: false,
+    downShotCooldown: 0
 };
 
 const camera = { x: 0, y: 0, targetX: 0, targetY: 0, lerp: 0.15 };

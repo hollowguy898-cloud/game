@@ -214,6 +214,18 @@ function update() {
         if (player.pistolAmmo <= 0) player.pistolReload = PISTOL_RELOAD_FRAMES;
     }
 
+    // Downward shot ability
+    if (player.downShotCooldown > 0) player.downShotCooldown--;
+    const downShotInput = keys['KeyS'] || keys['ArrowDown'];
+    if (player.hasDownShot && downShotInput && player.downShotCooldown <= 0 && !player.grounded) {
+        const bx = player.x + player.w / 2;
+        const by = player.y + player.h;
+        spawnBullet(bx + room.gx * WORLD_W, by + room.gy * WORLD_H, 0, DOWN_SHOT_SPEED, 1, 'player');
+        player.vy = Math.min(player.vy, DOWN_SHOT_BOOST);
+        player.downShotCooldown = DOWN_SHOT_COOLDOWN;
+        spawnParticle(room, bx, by, 'dash');
+    }
+
     // Bullets update (global bullets array)
     for (let bI = bullets.length - 1; bI >= 0; bI--) {
         const b = bullets[bI];
