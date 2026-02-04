@@ -12,6 +12,7 @@ const JUMP_POWER = -9.8;
 const ACCEL = 0.65;
 const DASH_POWER = 12;
 const DASH_COOLDOWN = 30;
+const JUMP_BUFFER_FRAMES = 4;
 
 // Pistol weapon constants
 const PISTOL_DAMAGE = 1;

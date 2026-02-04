@@ -17,6 +17,8 @@ window.addEventListener('resize', resize);
 resize();
 
 const keys = {};
+let jumpBuffer = 0;
+let jumpHeld = false;
 // basic key state
 window.onkeydown = (e) => {
     keys[e.code] = true;
@@ -260,18 +262,29 @@ function update() {
             }
         }
 
-        if (b.life <= 0) bullets.splice(bI, 1);
+    if (b.life <= 0) bullets.splice(bI, 1);
     }
+
+    const jumpInput = keys['Space'] || keys['KeyW'] || keys['ArrowUp'];
+    if (jumpInput && !jumpHeld) {
+        jumpBuffer = JUMP_BUFFER_FRAMES;
+    }
+    jumpHeld = jumpInput;
+
+    const tryBufferedJump = () => {
+        if (jumpBuffer > 0 && player.grounded) {
+            player.vy = JUMP_POWER;
+            player.grounded = false;
+            jumpBuffer = 0;
+            player.stretch = 1.4; player.squash = 0.7;
+            for(let i=0; i<8; i++) spawnParticle(room, player.x + player.w/2, player.y + player.h);
+        }
+    };
 
     if (keys['ArrowRight'] || keys['KeyD']) { player.vx += ACCEL; player.facing = 1; }
     if (keys['ArrowLeft'] || keys['KeyA']) { player.vx -= ACCEL; player.facing = -1; }
     
-    if ((keys['Space'] || keys['KeyW'] || keys['ArrowUp']) && player.grounded) {
-        player.vy = JUMP_POWER;
-        player.grounded = false;
-        player.stretch = 1.4; player.squash = 0.7;
-        for(let i=0; i<8; i++) spawnParticle(room, player.x + player.w/2, player.y + player.h);
-    }
+    tryBufferedJump();
 
     player.vy += GRAVITY;
 
@@ -302,6 +315,9 @@ function update() {
             player.y = Math.ceil(player.y / TILE_SIZE) * TILE_SIZE; player.vy = 0;
         }
     }
+
+    tryBufferedJump();
+    if (jumpBuffer > 0) jumpBuffer--;
 
     player.squash += (1 - player.squash) * 0.25;
     player.stretch += (1 - player.stretch) * 0.25;
