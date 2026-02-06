@@ -92,6 +92,33 @@ function drawRoomBackground(ctx, room, gx, gy) {
         const y = gy + WORLD_H - 40;
         ctx.fillRect(x, y, WORLD_W / 5, 2);
     }
+
+    // Wind visual for Windpass
+    if (room.type === 'windpass') {
+        ctx.fillStyle = 'rgba(200,230,200,0.06)';
+        for (let i = 0; i < 12; i++) {
+            const wx = gx + (Date.now()/200 + i*60) % WORLD_W;
+            const wy = gy + 40 + (i % 3) * 20 + Math.sin(Date.now()/300 + i) * 6;
+            ctx.beginPath(); ctx.ellipse(wx, wy, 60, 6, 0, 0, Math.PI*2); ctx.fill();
+        }
+    }
+
+    // Vines / hanging canopy hints
+    if (room.type === 'hanging_canopy' || room.type === 'canopy_break') {
+        ctx.strokeStyle = 'rgba(40,90,40,0.7)'; ctx.lineWidth = 2;
+        for (let i = 0; i < 8; i++) {
+            const vx = gx + 40 + i * 80;
+            const vy1 = gy + 10 + (i % 3) * 10;
+            const vy2 = vy1 + 60 + Math.sin(Date.now()/200 + i) * 10;
+            ctx.beginPath(); ctx.moveTo(vx, vy1); ctx.lineTo(vx, vy2); ctx.stroke();
+        }
+    }
+
+    // Runner shrine runes
+    if (room.type === 'runner_shrine') {
+        ctx.fillStyle = 'rgba(140,255,140,0.05)';
+        ctx.beginPath(); ctx.arc(gx + WORLD_W/2, gy + 100, 160, 0, Math.PI*2); ctx.fill();
+    }
 }
 
 function drawTile(ctx, baseX, baseY, tileId) {
@@ -190,124 +217,119 @@ function drawProp(ctx, prop, gx, gy) {
             ctx.lineTo(x + i, y + prop.h);
             ctx.stroke();
         }
+    } else if (prop.type === 'vine') {
+        // hanging vine: braided rope with leaves
+        ctx.strokeStyle = 'rgba(40,90,40,0.95)'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 80); ctx.stroke();
+        ctx.fillStyle = 'rgba(70,160,70,0.9)'; ctx.beginPath(); ctx.arc(x, y + 48, 6, 0, Math.PI*2); ctx.fill();
+    } else if (prop.type === 'fragile') {
+        // fragile branch: cracks suggest collapse
+        ctx.fillStyle = '#6b5e3e'; ctx.fillRect(x, y, prop.w, prop.h);
+        ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.moveTo(x+4, y+2); ctx.lineTo(x+prop.w-4, y+prop.h-2); ctx.stroke();
+    } else if (prop.type === 'low_ceiling') {
+        ctx.fillStyle = '#3b3b2f'; ctx.fillRect(x, y, prop.w, prop.h);
+        ctx.fillStyle = 'rgba(80,160,120,0.1)'; ctx.fillRect(x, y, prop.w, prop.h);
+    } else if (prop.type === 'wallrun') {
+        ctx.fillStyle = '#4e704e'; ctx.fillRect(x, y, 8, 120);
+        ctx.fillStyle = '#cedfd0'; ctx.fillRect(x+2, y+20, 4, 80);
     }
 }
 
-function drawItem(ctx, item, gx, gy) {
-    const x = gx + item.x;
-    const y = gx + item.y;
-    const bobbing = Math.sin(Date.now() / 500) * 2;
-    
-    if (item.type === 'sword') {
-        // Glowing sword with rotation
-        const rotation = (Date.now() / 30) % (Math.PI * 2);
-        
-        // Glow aura
-        ctx.fillStyle = 'rgba(255, 200, 100, 0.3)';
-        ctx.beginPath();
-        ctx.arc(x, y + bobbing, 12, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.save();
-        ctx.translate(x, y + bobbing);
-        ctx.rotate(rotation);
-        
-        // Sword blade
-        ctx.fillStyle = '#e8e8e8';
-        ctx.fillRect(-2, -8, 4, 16);
-        
-        // Blade shine
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-        ctx.fillRect(-1, -7, 2, 14);
-        
-        // Sword hilt
-        ctx.fillStyle = '#8b4513';
-        ctx.fillRect(-3, 6, 6, 3);
-        ctx.fillStyle = '#c9a442';
-        ctx.fillRect(-3, 8, 6, 1);
-        
-        ctx.restore();
-    } else if (item.type === 'potion') {
-        // Glowing potion bottle
-        ctx.fillStyle = 'rgba(255, 100, 100, 0.2)';
-        ctx.beginPath();
-        ctx.arc(x, y + bobbing, 10, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Bottle outline
-        ctx.strokeStyle = '#c9425c';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.rect(x - 4, y + bobbing - 6, 8, 12);
-        ctx.stroke();
-        
-        // Bottle cap
-        ctx.fillStyle = '#8b6f47';
-        ctx.fillRect(x - 3, y + bobbing - 8, 6, 2);
-        
-        // Liquid fill with animation
-        const fillHeight = 8 + Math.sin(Date.now() / 300) * 1;
-        ctx.fillStyle = 'rgba(255, 150, 150, 0.7)';
-        ctx.fillRect(x - 3, y + bobbing - 6 + (12 - fillHeight), 6, fillHeight);
-    }
 }
 
 function drawItem(ctx, item, gx, gy) {
     const x = gx + item.x;
     const y = gy + item.y;
     const bobbing = Math.sin(Date.now() / 500) * 2;
-    
+
     if (item.type === 'sword') {
         // Glowing sword with rotation
         const rotation = (Date.now() / 30) % (Math.PI * 2);
-        
+
         // Glow aura
         ctx.fillStyle = 'rgba(255, 200, 100, 0.3)';
         ctx.beginPath();
         ctx.arc(x, y + bobbing, 12, 0, Math.PI * 2);
         ctx.fill();
-        
+
         ctx.save();
         ctx.translate(x, y + bobbing);
         ctx.rotate(rotation);
-        
+
         // Sword blade
         ctx.fillStyle = '#e8e8e8';
         ctx.fillRect(-2, -8, 4, 16);
-        
+
         // Blade shine
         ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
         ctx.fillRect(-1, -7, 2, 14);
-        
+
         // Sword hilt
         ctx.fillStyle = '#8b4513';
         ctx.fillRect(-3, 6, 6, 3);
         ctx.fillStyle = '#c9a442';
         ctx.fillRect(-3, 8, 6, 1);
-        
+
         ctx.restore();
+
     } else if (item.type === 'potion') {
         // Glowing potion bottle
         ctx.fillStyle = 'rgba(255, 100, 100, 0.2)';
         ctx.beginPath();
         ctx.arc(x, y + bobbing, 10, 0, Math.PI * 2);
         ctx.fill();
-        
+
         // Bottle outline
         ctx.strokeStyle = '#c9425c';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.rect(x - 4, y + bobbing - 6, 8, 12);
         ctx.stroke();
-        
+
         // Bottle cap
         ctx.fillStyle = '#8b6f47';
         ctx.fillRect(x - 3, y + bobbing - 8, 6, 2);
-        
+
         // Liquid fill with animation
         const fillHeight = 8 + Math.sin(Date.now() / 300) * 1;
         ctx.fillStyle = 'rgba(255, 150, 150, 0.7)';
         ctx.fillRect(x - 3, y + bobbing - 6 + (12 - fillHeight), 6, fillHeight);
+
+    } else if (item.type === 'pistol') {
+        // pistol drawn with barrel and small glow
+        ctx.fillStyle = 'rgba(200,200,200,0.95)';
+        ctx.fillRect(x - 10, y + bobbing - 4, 20, 6);
+        ctx.fillStyle = '#333'; ctx.fillRect(x + 6, y + bobbing - 6, 12, 4);
+        ctx.fillStyle = 'rgba(200,200,255,0.12)'; ctx.beginPath(); ctx.arc(x, y + bobbing, 18, 0, Math.PI*2); ctx.fill();
+
+    } else if (item.type === 'momentum_module') {
+        // glowing core of momentum tech
+        ctx.fillStyle = 'rgba(140,255,140,0.12)'; ctx.beginPath(); ctx.arc(x, y + bobbing, 24, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = 'rgba(140,255,140,0.95)'; ctx.beginPath(); ctx.moveTo(x, y + bobbing - 10); ctx.lineTo(x + 8, y + bobbing); ctx.lineTo(x, y + bobbing + 10); ctx.lineTo(x - 8, y + bobbing); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillRect(x - 4, y + bobbing - 2, 8, 4);
+
+    } else if (item.type === 'momentum_dash') {
+        // module upgrade icon — small shard with pulse
+        const pulse = 0.8 + Math.sin(Date.now()/200) * 0.2;
+        ctx.fillStyle = `rgba(200,255,180,${pulse})`;
+        ctx.beginPath(); ctx.moveTo(x, y + bobbing - 8); ctx.lineTo(x + 6, y + bobbing); ctx.lineTo(x, y + bobbing + 8); ctx.lineTo(x - 6, y + bobbing); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillRect(x - 2, y + bobbing - 2, 4, 4);
+
+    } else {
+        // Default item rendering
+        const glowIntensity = 0.15 + Math.sin(Date.now() / 500) * 0.1;
+        ctx.fillStyle = `rgba(120,255,160,${glowIntensity})`;
+        ctx.beginPath();
+        ctx.arc(x, y + bobbing, 22, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Item body
+        ctx.fillStyle = item.color || "rgba(120,255,160,0.95)";
+        ctx.fillRect(x - 8, y + bobbing - 8, 16, 16);
+
+        // Item shine
+        ctx.fillStyle = "rgba(255,255,255,0.4)";
+        ctx.fillRect(x - 6, y + bobbing - 6, 4, 4);
     }
 }
 
@@ -368,6 +390,25 @@ function drawEnhancedHUD(ctx, player, room) {
         if (player.pistolReload > 0) {
             ctx.fillStyle = 'rgba(255,80,80,0.9)';
             ctx.fillRect(10, 108, 60 * (1 - player.pistolReload / PISTOL_RELOAD_FRAMES), 6);
+        }
+    }
+
+    // Momentum module HUD
+    if (player.hasMomentumModule) {
+        if (player.momentumNotifyTimer > 0) {
+            ctx.fillStyle = '#9be564';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('MOMENTUM DRIVE ONLINE', WORLD_W/2 - 80, 24);
+        }
+        ctx.fillStyle = '#b8ff9a';
+        ctx.fillText('MOMENTUM', 10, 130);
+        // charge bar
+        ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fillRect(10, 134, 80, 8);
+        ctx.fillStyle = '#7ee787'; ctx.fillRect(10, 134, 80 * player.momentumCharge, 8);
+        // dash upgrade icon
+        if (player.momentumDashUpgrade) {
+            ctx.fillStyle = '#c0ffc8';
+            ctx.fillText('DASH+', 100, 130);
         }
     }
 }

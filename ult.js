@@ -83,6 +83,24 @@ function spawnParticle(room, x, y, type = 'dust') {
     });
 }
 
+// Wind / collision visual helpers
+const WIND_FORCE = 0.08; // gentle wind used in windpass rooms
+
+function spawnWindLeaf(room, x, y, dir = 1) {
+    if (!room) return;
+    room.particles.push({ x, y, vx: dir * (1 + Math.random() * 2), vy: -0.2 + (Math.random()-0.5) * 0.4, life: 60 + Math.random() * 40, maxLife: 100, type: 'dust', scale: 1 + Math.random() * 1.5, rotation: Math.random() * Math.PI * 2 });
+}
+
+function spawnCollapseDebris(room, x, y, count = 8) {
+    for (let i = 0; i < count; i++) {
+        const d = spawnDebris(x + (Math.random() - 0.5) * 30, y + (Math.random() - 0.5) * 10);
+        d.vx *= 1 + Math.random() * 1.5;
+        d.vy -= Math.random() * 2;
+        room.enemies.push(d);
+        room.particles.push({ x: d.x, y: d.y, vx: d.vx * 0.4, vy: d.vy * 0.4, life: 40 + Math.random() * 40, maxLife: 80, type: 'debris_hint', scale: 1 + Math.random() * 2, rotation: Math.random() * Math.PI * 2 });
+    }
+}
+
 // Enhanced particle drawing
 function drawParticle(ctx, particle) {
     const alpha = particle.life / particle.maxLife;

@@ -27,7 +27,17 @@ const player = {
     pistolAmmo: 0,
     pistolMaxAmmo: PISTOL_MAX_AMMO,
     pistolCooldown: 0,
-    pistolReload: 0
+    pistolReload: 0,
+
+    // Momentum movement module
+    hasMomentumModule: false,      // unlocked in Runner Shrine
+    momentumNotifyTimer: 0,       // UI celebration timer
+    momentumCharge: 0,            // builds when dashing/wallrunning and used to boost jumps
+    isSliding: false,
+    slideTimer: 0,
+    isWallRunning: false,
+    wallrunTimer: 0,
+    momentumDashUpgrade: false
 };
 
 const camera = { x: 0, y: 0, targetX: 0, targetY: 0, lerp: 0.15 };
@@ -80,17 +90,48 @@ function drawPlayer(ctx, px, py) {
         ctx.fillStyle = '#c9a442';
         roundRect(ctx, player.w/2 - 3, player.h/4 + 8, 6, 6, 2);
 
-        // Arms with painted gauntlets and shadow
+        // Arms / sliding / wallrun visuals
         const armSwing = Math.sin(player.animTimer * 0.12) * Math.max(Math.abs(player.vx) * 0.3, 2);
-        ctx.save(); ctx.translate(player.w/2 - 8, player.h/4 + 9); ctx.rotate(armSwing * 0.35);
-        roundRect(ctx, -2, 0, 4, 11, 2); ctx.fillStyle = '#7a5236'; roundRect(ctx, -1, 8, 2, 3, 1); ctx.restore();
-        ctx.save(); ctx.translate(player.w/2 + 8, player.h/4 + 9); ctx.rotate(-armSwing * 0.35);
-        roundRect(ctx, -2, 0, 4, 11, 2); ctx.fillStyle = '#7a5236'; roundRect(ctx, -1, 8, 2, 3, 1); ctx.restore();
 
-        // Legs with shading and boots
-        const legSwing = Math.sin(player.animTimer * 0.15) * Math.max(Math.abs(player.vx) * 0.4, 1);
-        ctx.fillStyle = '#3f2b22'; roundRect(ctx, player.w/2 - 6, player.h/4 + 18, 5, 12 + Math.abs(legSwing), 2);
-        roundRect(ctx, player.w/2 + 1, player.h/4 + 18, 5, 12 - Math.abs(legSwing), 2);
+        if (player.isSliding) {
+            // slide pose: low torso, arms tucked
+            ctx.save();
+            ctx.translate(player.w/2, player.h/4 + 10);
+            ctx.rotate(player.facing * -0.3);
+            roundRect(ctx, -10, -2, 20, 8, 4); // low sliding torso
+            ctx.fillStyle = '#7a5236'; roundRect(ctx, -8, 6, 6, 3, 1); roundRect(ctx, 2, 6, 6, 3, 1);
+            ctx.restore();
+
+            // sliding legs blur
+            ctx.save(); ctx.globalAlpha = 0.9; ctx.fillStyle = 'rgba(60,40,30,0.9)';
+            ctx.fillRect(player.w/2 - 12, player.h/4 + 18, 24, 6);
+            ctx.restore();
+
+            // dust trail
+            if (Math.random() < 0.6) spawnParticle(world.getRoom(Math.floor(player.x / WORLD_W), Math.floor(player.y / WORLD_H)), player.x + player.w/2 - player.facing * 6, player.y + player.h, 'dash');
+        } else if (player.isWallRunning) {
+            // wall-run pose: torso lean and arm brace
+            ctx.save();
+            ctx.translate(player.w/2, player.h/4 + 4);
+            ctx.rotate(player.facing * -0.45);
+            roundRect(ctx, -6, -6, 14, 14, 3);
+            ctx.fillStyle = '#7a5236'; roundRect(ctx, -6, 6, 4, 6, 2);
+            ctx.restore();
+
+            // small sparks
+            if (Math.random() < 0.2) spawnParticle(world.getRoom(Math.floor(player.x / WORLD_W), Math.floor(player.y / WORLD_H)), player.x + (player.facing * 10), player.y + player.h/2, 'dash');
+        } else {
+            // regular arms and gauntlets
+            ctx.save(); ctx.translate(player.w/2 - 8, player.h/4 + 9); ctx.rotate(armSwing * 0.35);
+            roundRect(ctx, -2, 0, 4, 11, 2); ctx.fillStyle = '#7a5236'; roundRect(ctx, -1, 8, 2, 3, 1); ctx.restore();
+            ctx.save(); ctx.translate(player.w/2 + 8, player.h/4 + 9); ctx.rotate(-armSwing * 0.35);
+            roundRect(ctx, -2, 0, 4, 11, 2); ctx.fillStyle = '#7a5236'; roundRect(ctx, -1, 8, 2, 3, 1); ctx.restore();
+
+            // Legs with shading and boots
+            const legSwing = Math.sin(player.animTimer * 0.15) * Math.max(Math.abs(player.vx) * 0.4, 1);
+            ctx.fillStyle = '#3f2b22'; roundRect(ctx, player.w/2 - 6, player.h/4 + 18, 5, 12 + Math.abs(legSwing), 2);
+            roundRect(ctx, player.w/2 + 1, player.h/4 + 18, 5, 12 - Math.abs(legSwing), 2);
+        }
 
         // Cape with layered shading
         if (player.capeNodes.length > 0) {
@@ -244,6 +285,7 @@ function takeDamage() {
     player.shakeTimer = 30;
     player.vx = -player.facing * 7;
     player.vy = -4;
+    if (typeof AudioManager !== 'undefined') AudioManager.playSFX('hit');
     if (player.hp <= 0) {
         player.hp = 3;
         player.x = 100; player.y = 300;

@@ -169,6 +169,8 @@ function generateWorld() {
     r5.fillArea(0, 46, r5.width, 14, 1);
     r5.fillArea(20, 38, 20, 2, 1);
     r5.fillArea(55, 32, 12, 2, 1);
+    // spawn a mini "root titan" boss in this room for the mini-boss encounter
+    r5.enemies.push({ type: 'root_titan', x: 420, y: 240, hp: 20, maxHp: 20, facing: 1, h: 60 });
 
     // Room 6: forest continuation
     const r6 = new Room(0, 1, "forest");
@@ -399,6 +401,79 @@ function generateWorld() {
     // pistol upgrade reward sits in the tower center (increases pistol ammo)
     r16.items.push({ x: 480, y: 220, type: 'pistol_upgrade', color: 'rgba(200,180,255,0.95)' });
 
+    // Room 17: The Windpass (speed pressure)
+    const r17 = new Room(14, 0, 'windpass');
+    r17.fillArea(0, 46, r17.width, 14, 1);
+    // spaced platforms and landing stones
+    r17.fillArea(30, 36, 6, 2, 1); r17.fillArea(70, 36, 6, 2, 1); r17.fillArea(120, 36, 6, 2, 1);
+    r17.props.push({ type: 'platform', x: 200, y: 420, w: 36, h: 8 }); r17.props.push({ type: 'platform', x: 380, y: 420, w: 36, h: 8 });
+    // enemies: 5 normal swarms + 3 fast spawns
+    for (let i = 0; i < 5; i++) r17.enemies.push(spawnSwarm(100 + i * 160, 500, 'swarm'));
+
+    // Room 18: Hanging Canopy (vertical climb)
+    const r18 = new Room(15, 0, 'hanging_canopy');
+    r18.fillArea(0, 38, r18.width, 22, 1); // base lower floor
+    r18.fillArea(10, 28, 10, 2, 1); r18.fillArea(30, 22, 10, 2, 1); r18.fillArea(50, 16, 10, 2, 1); r18.fillArea(70, 10, 10, 2, 1);
+    // vines props (visuals + obstacles)
+    r18.props.push({ type: 'vine', x: 40, y: 60 }); r18.props.push({ type: 'vine', x: 200, y: 120 });
+    // hazards: falling debris triggers and spike patches
+    r18.props.push({ type: 'fall_trigger', x: 60, y: 30, w: 40, h: 12 });
+    r18.props.push({ type: 'spike', x: 120, y: 480, w: 40, h: 12 });
+    // enemies
+    for (let i = 0; i < 6; i++) r18.enemies.push(spawnSwarm(80 + i * 80, 380, 'mini_swarm'));
+    r18.enemies.push(spawnSwarm(240, 300, 'swarm')); r18.enemies.push(spawnSwarm(560, 260, 'swarm'));
+    r18.items.push({ x: 480, y: 120, type: 'pistol_upgrade', color: 'rgba(200,220,255,0.95)' });
+
+    // Room 19: The Broken Overpass (upper risky path)
+    const r19 = new Room(16, 0, 'broken_overpass');
+    r19.fillArea(0, 40, r19.width, 20, 1); // lower floor and underpass
+    r19.fillArea(0, 20, 20, 2, 1); r19.fillArea(30, 16, 40, 2, 1); r19.fillArea(100, 12, 40, 2, 1); // upper bridge sections
+    // upper watchers + mini swarms
+    r19.enemies.push({ type: 'watcher', x: 150, y: 120, hp: 4 }); r19.enemies.push({ type: 'watcher', x: 520, y: 120, hp: 4 });
+    for (let i = 0; i < 4; i++) r19.enemies.push(spawnSwarm(90 + i * 80, 140, 'mini_swarm'));
+    // lower path enemies
+    for (let i = 0; i < 6; i++) r19.enemies.push(spawnSwarm(60 + i * 90, 500, 'swarm'));
+    r19.enemies.push(spawnSwarm(600, 480, 'fast_swarm')); r19.enemies.push(spawnSwarm(720, 480, 'fast_swarm'));
+    // hidden item on upper route
+    r19.secretFound = false;
+
+    // Room 20: Runner Shrine (momentum module unlock/tutorial)
+    const r20 = new Room(17, 0, 'runner_shrine');
+    // Sections A/B/C laid out along x-axis
+    r20.fillArea(0, 44, r20.width, 16, 1);
+    // Section A: Slide tunnel (low ceiling)
+    r20.fillArea(10, 40, 20, 4, 1); // low ceiling area (height reduced)
+    r20.props.push({ type: 'low_ceiling', x: 60, y: 360, w: 180, h: 20 });
+    // Section B: wallrun walls
+    r20.fillArea(220, 20, 2, 32, 1); r20.fillArea(300, 20, 2, 32, 1);
+    // Section C: momentum jump platform
+    r20.fillArea(380, 34, 8, 2, 1);
+    // Momentum Module sits on a pedestal
+    r20.items.push({ x: 420, y: 260, type: 'momentum_module', color: 'rgba(140,255,140,0.95)', picked: false });
+    r20.momentumUnlocked = false; r20.momentumRewardSpawned = false;
+
+    // Room 21: Overgrown Gauntlet
+    const r21 = new Room(18, 0, 'overgrown_gauntlet');
+    r21.fillArea(0, 46, r21.width, 14, 1);
+    // alternating high / low routes
+    r21.fillArea(20, 36, 14, 2, 1); r21.fillArea(70, 32, 14, 2, 1); r21.fillArea(120, 36, 14, 2, 1);
+    // wallrun walls and spikes
+    r21.props.push({ type: 'wallrun', x: 40, y: 100 }); r21.props.push({ type: 'wallrun', x: 240, y: 100 });
+    for (let i = 0; i < 5; i++) r21.enemies.push(spawnSwarm(80 + i * 120, 480, 'fast_swarm'));
+    for (let i = 0; i < 6; i++) r21.enemies.push(spawnSwarm(120 + i * 80, 500, 'mini_swarm'));
+    r21.enemies.push({ type: 'watcher', x: 420, y: 180, hp: 4 }); r21.enemies.push({ type: 'watcher', x: 640, y: 180, hp: 4 });
+    r21.chaseActive = false; r21.chaseTimer = 0;
+
+    // Room 22: The Canopy Break (setpiece)
+    const r22 = new Room(19, 0, 'canopy_break');
+    r22.fillArea(0, 30, r22.width, 24, 1);
+    r22.fillArea(10, 24, 12, 2, 1); r22.fillArea(40, 18, 12, 2, 1); r22.fillArea(70, 12, 12, 2, 1); // fragile branches
+    r22.props.push({ type: 'fragile', x: 60, y: 120, w: 40, h: 8 });
+    r22.collapseTriggered = false; r22.collapsePhaseStarted = false;
+
+    // Reward choice on completion
+    r22.reward = { x: 520, y: 140, spawned: false, item: { type: 'momentum_dash', color: 'rgba(200,255,180,0.95)' } };
+
     // store rooms
     world.grid["0,0"] = r1;
     world.grid["1,0"] = r2;
@@ -417,54 +492,39 @@ function generateWorld() {
     world.grid["12,0"] = r15;
     world.grid["13,0"] = r16;
 
-    // --- Room 23: Rooted Colossus Arena ---
-    const r23 = new Room(14, 0, "rooted_colossus_arena");
-    r23.fillArea(0, 46, r23.width, 14, 1);
+// (Duplicate room block removed - new rooms 17-22 are defined earlier.)
 
-    // central altar platform & small raised core
-    r23.fillArea(26, 36, 8, 2, 1);
-    r23.fillArea(30, 34, 2, 2, 1);
 
-    // left/right wallrun pillars (tall walls)
-    r23.fillArea(4, 10, 6, 36, 1);
-    r23.fillArea(50, 10, 6, 36, 1);
+// Room 25: Gloom Grove - Mixed combat + gloom weaver teaser
+const r25 = new Room(22, 0, "echo_grove");
+r25.fillArea(0, 44, r25.width, 16, 1);
+r25.fillArea(20, 34, 24, 2, 1);
+r25.fillArea(50, 30, 20, 2, 1);
+r25.enemies.push({ type: "gloom_weaver", x: 500, y: 280, hp: 18, mini: true }); // weaker version
+r25.enemies.push({ type: "flyer", x: 300, y: 340, hp: 4 });
+r25.enemies.push({ type: "watcher", x: 700, y: 320, hp: 6 });
+r25.items.push({ x: 48 * TILE_SIZE, y: 26 * TILE_SIZE, type: "pistol_ammo" });
+world.grid["22,0"] = r25;
 
-    // short branch ledges (breakable)
-    r23.fillArea(14, 30, 6, 1, 1);
-    r23.fillArea(38, 30, 6, 1, 1);
-    r23.props.push({ type: 'breakable', x: 14 * TILE_SIZE + 30, y: 30 * TILE_SIZE, w: 6 * TILE_SIZE, h: TILE_SIZE, broken: false });
-    r23.props.push({ type: 'breakable', x: 38 * TILE_SIZE + 30, y: 30 * TILE_SIZE, w: 6 * TILE_SIZE, h: TILE_SIZE, broken: false });
+// Room 26: Broken Canopy - Large open arena before next major setpiece
+const r26 = new Room(23, 0, "pistol_arena");
+r26.fillArea(0, 42, r26.width, 18, 1);
+// scattered high platforms
+r26.fillArea(10, 34, 16, 2, 1);
+r26.fillArea(40, 28, 20, 2, 1);
+r26.fillArea(70, 32, 14, 2, 1);
+r26.fillArea(25, 18, 12, 2, 1);     // high reward platform
+r26.enemies.push({ type: "watcher", x: 300, y: 300, hp: 7 });
+r26.enemies.push({ type: "watcher", x: 600, y: 260, hp: 7 });
+r26.enemies.push({ type: "flyer", x: 450, y: 180, hp: 5 });
+r26.enemies.push({ type: "flyer", x: 750, y: 220, hp: 5 });
+r26.items.push({ x: 31 * TILE_SIZE, y: 16 * TILE_SIZE, type: "core" });
+world.grid["23,0"] = r26;
 
-    // altar and pit
-    r23.props.push({ type: 'altar', x: 30 * TILE_SIZE, y: 34 * TILE_SIZE, w: 64, h: 20 });
-    r23.fillArea(28, 38, 6, 8, 0); // clear tiles for pit
-    r23.props.push({ type: 'spike', x: 30 * TILE_SIZE, y: 50 * TILE_SIZE, w: 120, h: 12 });
-
-    // wallrun surfaces (visual/flag)
-    r23.props.push({ type: 'wallrun', x: 4 * TILE_SIZE + 30, y: 10 * TILE_SIZE, w: 6 * TILE_SIZE, h: 36 * TILE_SIZE });
-    r23.props.push({ type: 'wallrun', x: 50 * TILE_SIZE + 30, y: 10 * TILE_SIZE, w: 6 * TILE_SIZE, h: 36 * TILE_SIZE });
-
-    // boss object - Root Titan
-    const rootTitan = {
-      x: 300, y: 20 * TILE_SIZE, w: 100, h: 120,
-      vx: 0, vy: 0,
-      type: 'root_titan',
-      state: 'intro', // intro, active, stunned, dying
-      timer: 0,
-      facing: 1,
-      hp: 300,
-      maxHp: 300,
-      rage: 0,
-      charge: 0,
-      phase: 1,
-      invuln: 0,
-      spawnCooldown: 0,
-      boss: true
-    };
-    r23.enemies.push(rootTitan);
-    r23.bossActive = false;
-
-    world.grid["14,0"] = r23;
+// Atmosphere pass for new rooms
+[r17,r18,r19,r20,r21,r22,r23,r24,r25,r26].forEach(r => {
+    if (r) r.generateAtmosphere();
+});
 
     // atmosphere pass
     for (let key in world.grid) {
@@ -1040,6 +1100,8 @@ function spawnWave(room, index) {
         // spawn a little burst to indicate arrival
         room.particles.push({ x: e.x, y: e.y, vx: 0, vy: 0, alpha: 0.9, size: 3, life: 30, color: 'rgba(255,200,150,0.6)' });
     }
+    // play a spawn sound when wave spawns
+    if (typeof AudioManager !== 'undefined') AudioManager.playSFX('spawn');
 }
 
 function updateEnemiesAndParticles(room) {
@@ -1096,6 +1158,86 @@ function updateEnemiesAndParticles(room) {
                     // finished pistol event
                     room.pistolEvent = null;
                 }
+            }
+        }
+    }
+
+    // Room-type special mechanics
+    if (room.type === 'windpass') {
+        // gentle lateral wind and leaf particles
+        const dir = 1; // push to the right (could be room-specified)
+        player.vx += WIND_FORCE * dir;
+        if (Math.random() < 0.05) spawnWindLeaf(room, room.gx * WORLD_W + (Math.random() * WORLD_W), room.gy * WORLD_H + Math.random() * WORLD_H, dir);
+
+        // occasional fast swarm spawn ahead of the player
+        if (Math.random() < 0.01) {
+            const px = Math.floor(player.x + player.facing * 200);
+            room.enemies.push(spawnSwarm(px - room.gx * WORLD_W, 420, 'fast_swarm'));
+        }
+    }
+
+    if (room.type === 'hanging_canopy') {
+        // vertical ambience: vines & falling debris chances
+        if (Math.random() < 0.02) {
+            const vx = room.gx * WORLD_W + Math.random() * WORLD_W;
+            const vy = room.gy * WORLD_H + Math.random() * WORLD_H/2;
+            spawnParticle(room, vx - room.gx * WORLD_W, vy - room.gy * WORLD_H, 'fog');
+        }
+    }
+
+    if (room.type === 'broken_overpass') {
+        // secret upper reward: detect if player reached high area and reveal hidden item
+        if (!room.secretFound && player.y < room.gy * WORLD_H + 160) {
+            room.secretFound = true;
+            room.items.push({ x: 220, y: 140, type: 'pistol_upgrade', color: 'rgba(220,180,255,0.95)' });
+        }
+    }
+
+    if (room.type === 'runner_shrine') {
+        // If player collected momentum module item, spawn the exit wave
+        if (room.momentumUnlocked && !room.momentumRewardSpawned && room.enemies.length === 0) {
+            // spawn exit wave once
+            for (let i = 0; i < 8; i++) {
+                room.enemies.push(spawnSwarm(120 + i * 60, 480, 'mini_swarm'));
+            }
+            room.momentumRewardSpawned = true;
+        }
+    }
+
+    if (room.type === 'overgrown_gauntlet') {
+        // chase segment: trigger spike floor when player reaches midline
+        if (!room.chaseActive && (player.x - room.gx * WORLD_W) > WORLD_W/2) {
+            room.chaseActive = true; room.chaseTimer = 0;
+            // turn on spike props (simple toggle)
+            for (const p of room.props) if (p.type === 'spike') p.active = true;
+        }
+        if (room.chaseActive) {
+            room.chaseTimer++;
+            if (room.chaseTimer > 300) {
+                room.chaseActive = false;
+                for (const p of room.props) if (p.type === 'spike') p.active = false;
+            }
+        }
+    }
+
+    if (room.type === 'canopy_break') {
+        if (!room.collapseTriggered && (player.x - room.gx * WORLD_W) > WORLD_W/3 && player.y < room.gy * WORLD_H + WORLD_H/2) {
+            room.collapseTriggered = true; room.collapseTimer = 0;
+        }
+        if (room.collapseTriggered && !room.collapsePhaseStarted) {
+            room.collapseTimer++;
+            if (room.collapseTimer > 100) {
+                // start collapse
+                room.collapsePhaseStarted = true;
+                // spawn debris across top
+                for (let i=0;i<12;i++) spawnCollapseDebris(room, room.gx * WORLD_W + 120 + i * 60, room.gy * WORLD_H + 80, 4);
+                player.shakeTimer = 40;
+                // spawn phase 2 enemies shortly after
+                setTimeout(()=>{
+                    for (let i=0;i<3;i++) room.enemies.push(spawnSwarm(120 + i * 160, 520, 'fast_swarm'));
+                    for (let i=0;i<6;i++) room.enemies.push(spawnSwarm(80 + i * 80, 480, 'mini_swarm'));
+                    room.enemies.push({ type: 'mini_boss', x: 520, y: 440, hp: 6, maxHp: 6 });
+                }, 600);
             }
         }
     }
@@ -1234,141 +1376,10 @@ function updateEnemiesAndParticles(room) {
             }
         }
 
-        // Boss update routine for Root Titan
-        function updateBoss(e, room) {
-            e.timer++;
-            if (e.invuln > 0) e.invuln--;
-
-            // if player enters room start fight
-            const playerRX = Math.floor((player.x + player.w/2) / WORLD_W);
-            const playerRY = Math.floor((player.y + player.h/2) / WORLD_H);
-            if (!room.bossActive && room.gx === playerRX && room.gy === playerRY) {
-                room.bossActive = true;
-                room.locked = true; // keep player in arena
-                e.state = 'active';
-                e.timer = 0;
-            }
-
-            // phase transitions
-            const hpPct = e.hp / e.maxHp;
-            if (hpPct < 0.3 && e.phase < 3) { e.phase = 3; e.timer = 0; e.charge = 0; e.spawnCooldown = 0; }
-            else if (hpPct < 0.65 && e.phase < 2) { e.phase = 2; e.timer = 0; e.spawnCooldown = 0; }
-
-            // rage increases with time and when hit
-            e.rage = Math.min(100, e.rage + 0.01 + (e.maxHp - e.hp) * 0.0008);
-
-            // AI think rhythm
-            if (!e._think || e._think <= 0) {
-                e._think = 60;
-                const px = player.x - (room.gx * WORLD_W);
-                const dist = Math.abs(px - e.x);
-                if (dist < 180 && Math.random() < 0.6) e.nextAction = 'root_slam';
-                else if (dist < 350 && Math.random() < 0.5) e.nextAction = 'lunge';
-                else e.nextAction = 'seed_barrage';
-
-                if (e.phase === 2 && Math.random() < 0.25) e.nextAction = 'altar_pulse';
-                if (e.phase === 3 && Math.random() < 0.35) e.nextAction = 'lunge';
-            }
-            e._think--;
-
-            // Execute actions
-            switch (e.nextAction) {
-                case 'root_slam':
-                    if (!e._attackTimer) { e._attackTimer = 40; e.state = 'windup'; e._anim = 'slam'; room.particles.push({ x: e.x, y: e.y, life: 30, color: 'rgba(200,120,80,0.8)' }); }
-                    e._attackTimer--;
-                    if (e._attackTimer === 18) {
-                        const hitX = room.gx * WORLD_W + e.x + (e.facing === 1 ? 40 : -80);
-                        const hitY = room.gy * WORLD_H + e.y + e.h;
-                        if (player.x + player.w/2 > hitX - 40 && player.x < hitX + 40 && Math.abs(player.y - hitY) < 40) {
-                            takeDamage();
-                        }
-                        for (let i = 0; i < 4; i++) {
-                            room.props.push({ x: e.x + (i*24 - 36) + (e.facing===1?40:-80), y: e.y + e.h, w: 8, h: 12, color: '#550000', type: 'spike' });
-                        }
-                    }
-                    if (e._attackTimer <= 0) { e._attackTimer = 0; e.nextAction = null; }
-                    break;
-
-                case 'lunge':
-                    if (!e._lungeTimer) { e._lungeTimer = 36; e.state = 'lungeWind'; e.vx = (player.x - (room.gx * WORLD_W) - e.x) > 0 ? 6 : -6; }
-                    e._lungeTimer--;
-                    e.x += e.vx;
-                    if (e._lungeTimer === 0) {
-                        if (Math.abs(player.x - (room.gx * WORLD_W + e.x)) < 120) takeDamage();
-                        for (let i=0;i<6;i++) spawnDebris(room.gx*WORLD_W + e.x + (Math.random()-0.5)*60, room.gy*WORLD_H + e.y + e.h);
-                        e._lungeTimer = 0;
-                        e.nextAction = null;
-                    }
-                    break;
-
-                case 'seed_barrage':
-                    if (!e._barrageTimer) { e._barrageTimer = 80; e.state = 'barrageWind'; }
-                    e._barrageTimer--;
-                    if (e._barrageTimer % 12 === 0) {
-                        const seed = {
-                            x: e.x + (Math.random()-0.5)*40,
-                            y: e.y + 20 + (Math.random()*20),
-                            vx: (Math.random()-0.5)*2 + (player.x - (room.gx*WORLD_W) - e.x) * 0.002,
-                            vy: -2 + Math.random()*0.4,
-                            life: 120,
-                            type: 'seed'
-                        };
-                        room.particles.push(seed);
-                    }
-                    if (e._barrageTimer <= 0) { e._barrageTimer = 0; e.nextAction = null; }
-                    break;
-
-                case 'altar_pulse':
-                    if (!e._pulseTimer) { e._pulseTimer = 100; e.state = 'charging'; e.charge = 100; }
-                    e._pulseTimer--;
-                    if (e._pulseTimer === 20) {
-                        if (Math.abs(player.x - (room.gx*WORLD_W + 30*TILE_SIZE)) < 220) takeDamage();
-                        for (let i=0;i<6;i++) {
-                            const px = 20*TILE_SIZE + i*16 + Math.random()*8;
-                            room.props.push({ x: px, y: 36*TILE_SIZE + 8, w: 12, h: 8, color: '#2a1f0f', type: 'crack' });
-                        }
-                    }
-                    if (e._pulseTimer <= 0) { e._pulseTimer = 0; e.nextAction = null; e.charge = 0; }
-                    break;
-
-                default:
-                    if (Math.random() < 0.01) e.facing *= -1;
-                    if (e.spawnCooldown <= 0 && Math.random() < 0.02) {
-                        e.spawnCooldown = 180;
-                        room.enemies.push(spawnSwarm(40, 30*TILE_SIZE, 'fast_swarm'));
-                        room.enemies.push(spawnSwarm(560, 30*TILE_SIZE, 'mini_swarm'));
-                    }
-                    e.spawnCooldown--;
-                    break;
-            }
-
-            // seed projectile handling
-            for (let si = room.particles.length - 1; si >= 0; si--) {
-                const pr = room.particles[si];
-                if (pr.type === 'seed') {
-                    pr.x += pr.vx;
-                    pr.y += pr.vy;
-                    pr.vy += 0.08;
-                    pr.life--;
-                    const wx = room.gx*WORLD_W + pr.x;
-                    const wy = room.gy*WORLD_H + pr.y;
-                    if (Math.abs(player.x + player.w/2 - wx) < 12 && Math.abs(player.y + player.h/2 - wy) < 12) { takeDamage(); room.particles.splice(si,1); continue; }
-                    if (pr.life <= 0) {
-                        for (let k=0;k<2;k++) room.enemies.push(spawnSwarm(pr.x + (Math.random()-0.5)*24, pr.y + (Math.random()-0.5)*24, 'mini_swarm'));
-                        room.particles.splice(si, 1);
-                    }
-                }
-            }
-
-            // clamp boss position to arena bounds
-            e.x = Math.max(30, Math.min(e.x, ROOM_WIDTH_TILES * TILE_SIZE - 80));
-
-            // Unlock room if boss died
-            if (e.hp <= 0) {
-                room.locked = false;
-                room.bossActive = false;
-            }
-        }
+        // Boss update is implemented in `boss_ai.js` and called globally
+        // (keeps `world.js` focused on world mechanics and avoids nested function definitions)
+        // The function `updateBoss(e, room)` is loaded earlier by `index.js` and is available globally.
+        // (No inline boss function here.)
 
         // remove dead enemies
         if (e.hp !== undefined && e.hp <= 0) {
