@@ -86,6 +86,8 @@
   const ui = document.createElement("div");
   ui.className = "ui";
 
+  const leftStats = document.createElement("div"); leftStats.style.display = 'flex'; leftStats.style.gap = '12px';
+
   const roomLabel = document.createElement("div");
   roomLabel.className = "stats";
   roomLabel.id = "roomLabel";
@@ -96,8 +98,19 @@
   fpsCounter.id = "fpsCounter";
   fpsCounter.textContent = "60 FPS";
 
-  ui.appendChild(roomLabel);
-  ui.appendChild(fpsCounter);
+  leftStats.appendChild(roomLabel);
+  leftStats.appendChild(fpsCounter);
+
+  const audioControls = document.createElement('div'); audioControls.style.pointerEvents = 'auto'; audioControls.style.display = 'flex'; audioControls.style.gap = '8px'; audioControls.style.alignItems = 'center';
+  const muteBtn = document.createElement('button'); muteBtn.textContent = '🔊'; muteBtn.title = 'Toggle audio'; muteBtn.style.padding = '6px'; muteBtn.style.fontSize = '12px';
+  const vol = document.createElement('input'); vol.type = 'range'; vol.min = 0; vol.max = 1; vol.step = 0.05; vol.value = 0.9; vol.title = 'Volume'; vol.style.width = '80px';
+
+  muteBtn.onclick = () => { if (typeof AudioManager !== 'undefined') { AudioManager.toggleMute(); muteBtn.textContent = AudioManager.muted ? '🔇' : '🔊'; } };
+  vol.oninput = () => { if (typeof AudioManager !== 'undefined') AudioManager.setVolume(parseFloat(vol.value)); };
+  audioControls.appendChild(muteBtn); audioControls.appendChild(vol);
+
+  ui.appendChild(leftStats);
+  ui.appendChild(audioControls);
 
   const canvas = document.createElement("canvas");
   canvas.id = "gameCanvas";
@@ -107,7 +120,7 @@
 
   const controlsHint = document.createElement("div");
   controlsHint.className = "controls-hint";
-  controlsHint.textContent = "WASD • SPACE • J (ATTACK) • SHIFT (DASH)";
+  controlsHint.textContent = "WASD • SPACE • J (ATTACK) • SHIFT (DASH) • S (SLIDE) • K (PISTOL)";
 
   document.body.appendChild(container);
   document.body.appendChild(controlsHint);
@@ -118,7 +131,9 @@
   const scripts = [
     "ult.js",
     "player.js",
-    "world-gen.js",
+    "world.js",
+    "boss_ai.js",
+    "audio.js",
     "render.js",
     "game.js"
   ];

@@ -296,9 +296,58 @@ function update() {
     if (keys['ArrowRight'] || keys['KeyD']) { player.vx += ACCEL; player.facing = 1; }
     if (keys['ArrowLeft'] || keys['KeyA']) { player.vx -= ACCEL; player.facing = -1; }
     
-    tryBufferedJump();
+    // Jump / Momentum jump
+    if ((keys['Space'] || keys['KeyW'] || keys['ArrowUp'])) {
+        if (player.grounded) {
+            player.vy = JUMP_POWER;
+            player.grounded = false;
+            player.stretch = 1.4; player.squash = 0.7;
+            for(let i=0; i<8; i++) spawnParticle(room, player.x + player.w/2, player.y + player.h);
+        } else if (player.hasMomentumModule && player.momentumCharge > 0) {
+            // momentum-assisted mid-air jump boost
+            player.vy = JUMP_POWER * 1.15;
+            player.vx += player.facing * 2.2;
+            player.momentumCharge = 0;
+            for (let i=0; i<12; i++) spawnParticle(room, player.x + player.w/2, player.y + player.h/2, 'dash');
+        }
+    }
 
-    player.vy += GRAVITY;
+    // Sliding
+    if (player.hasMomentumModule) {
+        if (!player.isSliding && player.grounded && (keys['KeyS'] || keys['ArrowDown']) && Math.abs(player.vx) > 1.2) {
+            player.isSliding = true; player.slideTimer = 36;
+            player.vx *= 1.6; player.squash = 0.8; player.stretch = 1.2;
+            for (let i = 0; i < 6; i++) spawnParticle(room, player.x + player.w/2 - player.facing * 6, player.y + player.h, 'dash');
+        }
+        if (player.isSliding) {
+            player.slideTimer--;
+            if (player.slideTimer <= 0) player.isSliding = false;
+            player.vx *= 0.985;
+        }
+
+        // Wallrun detection (simple — when airborne and touching wall while pressing into it)
+        if (!player.grounded && !player.isWallRunning) {
+            const sideCheckX = player.facing === 1 ? player.x + player.w + 2 : player.x - 2;
+            const sideTile = getTileAt(sideCheckX, player.y + player.h/2);
+            if (sideTile !== 0 && ((player.facing === 1 && (keys['ArrowRight'] || keys['KeyD'])) || (player.facing === -1 && (keys['ArrowLeft'] || keys['KeyA'])))) {
+                player.isWallRunning = true; player.wallrunTimer = 60;
+                player.momentumCharge = Math.min(1, player.momentumCharge + 0.6);
+            }
+        }
+        if (player.isWallRunning) {
+            player.wallrunTimer--;
+            player.vy = Math.min(player.vy, 1); // slow fall
+            player.vx = player.facing * Math.max(Math.abs(player.vx), 3);
+            player.momentumCharge = Math.min(1, player.momentumCharge + 0.02);
+            if (player.wallrunTimer <= 0) player.isWallRunning = false;
+        }
+
+        // momentum charge decay
+        player.momentumCharge = Math.max(0, player.momentumCharge - 0.002);
+    }
+
+    // Gravity
+    if (player.isWallRunning) player.vy += GRAVITY * 0.2; else player.vy += GRAVITY;
 
     // Horizontal collision
     player.x += player.vx;
@@ -361,6 +410,7 @@ function update() {
 
         // Items
         room.items.forEach(it => {
+    if (player.momentumNotifyTimer > 0) player.momentumNotifyTimer--;
             if (!it.picked && Math.abs((player.x + player.w/2) - (room.gx * WORLD_W + it.x)) < 24 && Math.abs(player.y - (room.gy * WORLD_H + it.y)) < 40) {
                 it.picked = true;
                 if (it.type === 'sword') player.hasSword = true;
@@ -382,6 +432,14 @@ function update() {
                 } else if (it.type === 'pistol_upgrade') {
                     player.pistolMaxAmmo = (player.pistolMaxAmmo || PISTOL_MAX_AMMO) + 6;
                     player.pistolAmmo = player.pistolMaxAmmo;
+                } else if (it.type === 'momentum_module') {
+                    player.hasMomentumModule = true;
+                    player.momentumNotifyTimer = 240;
+                    player.momentumCharge = 0;
+                    room.momentumUnlocked = true;
+                    // visually mark the pedestal collected
+                } else if (it.type === 'momentum_dash') {
+                    player.momentumDashUpgrade = true;
                 }
                 player.shakeTimer = 10;
             }
@@ -389,7 +447,7 @@ function update() {
 
         // Spikes
         room.props.forEach(p => {
-            if (p.type === 'spike') {
+            if (p.type === 'spike' && p.active !== false) {
                 const px = room.gx * WORLD_W + p.x;
                 const py = room.gy * WORLD_H + p.y;
                 if (player.x + player.w > px && player.x < px + p.w &&
