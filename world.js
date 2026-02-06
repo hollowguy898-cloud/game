@@ -1152,7 +1152,15 @@ function updateEnemiesAndParticles(room) {
             e.y += e.vy || 0;
 
             if (!e.dir && e.type === 'crawler') e.dir = Math.random() < 0.5 ? -1 : 1;
-            if (e.type === 'crawler') e.vx = e.dir * 0.8;
+            if (e.type === 'crawler') {
+                const dx = player.x - (room.gx * WORLD_W + e.x);
+                if (Math.abs(dx) < 220) {
+                    e.dir = Math.sign(dx) || e.dir;
+                    e.vx = e.dir * 1.2;
+                } else {
+                    e.vx = e.dir * 0.8;
+                }
+            }
 
             // floor collision (super simple)
             if (e.y > (ROOM_HEIGHT_TILES * TILE_SIZE) - 80) {
@@ -1174,7 +1182,9 @@ function updateEnemiesAndParticles(room) {
             // mild player attraction
             const dx = player.x - (room.gx * WORLD_W + e.x);
             if (Math.abs(dx) < 350) {
-                e.x += Math.sign(dx) * 0.8;
+                const strafe = Math.sin(e.t * 1.5) * 1.2;
+                e.x += Math.sign(dx) * 0.9 + strafe;
+                e.y += Math.cos(e.t) * 0.4;
             }
         }
 
@@ -1186,11 +1196,13 @@ function updateEnemiesAndParticles(room) {
 
             const dx = player.x - (room.gx * WORLD_W + e.x);
             const dy = player.y - (room.gy * WORLD_H + e.y);
+            const leadX = dx + player.vx * 12;
+            const leadY = dy + player.vy * 12;
             const dist = Math.hypot(dx, dy);
 
             // Fire when player in range and cooldown ready
             if (dist < 350 && e.cooldown <= 0) {
-                const angle = Math.atan2(dy, dx);
+                const angle = Math.atan2(leadY, leadX);
                 const bx = room.gx * WORLD_W + e.x + Math.cos(angle) * 10;
                 const by = room.gy * WORLD_H + e.y + Math.sin(angle) * 10;
                 const speed = 6;
@@ -1259,15 +1271,15 @@ function updateEnemiesAndParticles(room) {
 
             // AI think rhythm
             if (!e._think || e._think <= 0) {
-                e._think = 60;
+                e._think = 40;
                 const px = player.x - (room.gx * WORLD_W);
                 const dist = Math.abs(px - e.x);
-                if (dist < 180 && Math.random() < 0.6) e.nextAction = 'root_slam';
-                else if (dist < 350 && Math.random() < 0.5) e.nextAction = 'lunge';
+                if (dist < 180 && Math.random() < 0.9) e.nextAction = 'root_slam';
+                else if (dist < 350 && Math.random() < 0.75) e.nextAction = 'lunge';
                 else e.nextAction = 'seed_barrage';
 
-                if (e.phase === 2 && Math.random() < 0.25) e.nextAction = 'altar_pulse';
-                if (e.phase === 3 && Math.random() < 0.35) e.nextAction = 'lunge';
+                if (e.phase === 2 && Math.random() < 0.4) e.nextAction = 'altar_pulse';
+                if (e.phase === 3 && Math.random() < 0.55) e.nextAction = 'lunge';
             }
             e._think--;
 
@@ -1325,7 +1337,7 @@ function updateEnemiesAndParticles(room) {
                         if (Math.abs(player.x - (room.gx*WORLD_W + 30*TILE_SIZE)) < 220) takeDamage();
                         for (let i=0;i<6;i++) {
                             const px = 20*TILE_SIZE + i*16 + Math.random()*8;
-                            room.props.push({ x: px, y: 36*TILE_SIZE + 8, w: 12, h: 8, color: '#2a1f0f', type: 'crack' });
+                            room.props.push({ x: px, y: 36*TILE_SIZE + 8, w: 12, h: 8, color: '#2a1f0f', type: 'crack', broken: false });
                         }
                     }
                     if (e._pulseTimer <= 0) { e._pulseTimer = 0; e.nextAction = null; e.charge = 0; }
